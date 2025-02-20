@@ -1,9 +1,10 @@
 import boto3
 
 
+
+"""Retrieve the contents in the bucket"""
+
 s3 = boto3.client('s3')
-
-
 bucket_name = 'soccer-predictor-web-scrape' 
 #file_key = 'team_standings.csv'  
 file_key ='last_five_form.csv'
