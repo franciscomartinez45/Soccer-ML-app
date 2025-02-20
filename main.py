@@ -85,8 +85,12 @@ def get_standings():
         goals = team.find("span", class_="table__cell table__cell--value table__cell--score").text
         goal_difference = team.find("span", class_="table__cell table__cell--value table__cell--goalsForAgainstDiff").text
         points = team.find("span",class_="table__cell table__cell--value table__cell--points").text
-        teams.append({"Position":position,"Team Name":name,"Played":played,"Won":won,"Tied":tied, "Lost":lost,"Scored:Conceded":goals, "Goal Difference":goal_difference,"Total Points":points})
+        team_cells = team.find_all("div", class_="tableCellFormIcon wcl-trigger_YhU1j")
+        present_form = [team_cells[i].text for i in range(5)]
+        teams.append({"Position":position,"Team Name":name,"Played":played,"Won":won,"Tied":tied, "Lost":lost,"Scored:Conceded":goals, "Goal Difference":goal_difference,"Total Points":points, "Form":present_form})
         #print(f"{position},{name},{played},{won},{tied},{lost},{goals},{goal_difference},{points}")
+        #return None
+
     df = pd.DataFrame(teams)
     csv_buffer = StringIO()
     df.to_csv(csv_buffer, index=False)
@@ -104,8 +108,8 @@ def get_standings():
     print(f"Successfully uploaded to s3://{bucket_name}/{file_name}")
     #print(df)
 def main():
-    posts = get_form()
-   # teams = get_standings()
+    #posts = get_form()
+    teams = get_standings()
     
 
 if __name__ == "__main__":
