@@ -4,7 +4,6 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import pandas as pd
-import time
 import boto3
 
 s3 = boto3.client('s3')
@@ -27,7 +26,6 @@ def get_form():
     driver = webdriver.Chrome(service=service, options=options)
     URL = f"https://www.flashscoreusa.com/{sport}/{country}/{league}/results/"
     driver.get(URL)
-    time.sleep(5)
     soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
     matches = []
@@ -68,7 +66,6 @@ def get_standings():
     driver = webdriver.Chrome(service=service, options=options)
     standingsURL = "https://www.flashscoreusa.com/soccer/spain/laliga/standings/#/dINOZk9Q/table/overall"
     driver.get(standingsURL)
-    time.sleep(5)
     soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
     teams = []
