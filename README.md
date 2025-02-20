@@ -34,7 +34,7 @@ This application scrapes data from various sources and uploads it to an AWS S3 b
 1. **Clone the Repository**:
 
    ```bash
-   git clone https://github.com/yourusername/project-name.git
+   git clone https://github.com/franciscomartinez45/Soccer-ML-app.git
    cd project-name
 
    ```
