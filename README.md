@@ -1,19 +1,19 @@
-# Project Name: Data Scraping and ML Analysis Pipeline
+# Soccer-Standings-Scraping application: Data Scraping and ML Analysis Pipeline
 
 ## Overview
 
-This application scrapes data from various sources and uploads it to an AWS S3 bucket for further processing. The collected data will serve as the foundation for a machine learning project, where the data will be analyzed to create meaningful insights. These insights will be visualized on a front-end interface, providing users with an interactive way to explore and understand the results of the analysis.
+This application scrapes data from flashscore usa and uploads it to an AWS S3 bucket for further processing. The collected data will serve as the foundation for a machine learning project, where the data will be analyzed to create predictions about soccer scores for upcoming games. Using a front end interface, still in the works, this application will provide users with an interactive way to explore and possibly predict the outcome of upcoming soccer games in Spain's La Liga soccer league
 
 ### Key Features:
 
-- **Data Scraping**: Collecting relevant data from predefined sources.
+- **BeautifulSoup**: Collecting relevant data from predefined sources.
 - **S3 Integration**: The scraped data is uploaded to an AWS S3 bucket for storage and access.
 - **Machine Learning Analysis**: The uploaded data will be processed and analyzed using machine learning algorithms.
-- **Frontend Visualization**: Data analysis results will be visualized and presented in an interactive web interface.
+- **Frontend Visualization**: Will display charts and ML analysis to possibly predict outcomes of games
 
 ## Current Status
 
-- **Data Scraping**: The data scraping functionality is fully implemented and operational. The application collects data from multiple sources (e.g., web scraping, APIs) and processes it to extract the relevant features.
+- **Data Scraping**: The data scraping functionality is fully implemented and operational. The application collects data from a reliable soccer reporting site and has been stored to be processed.
 - **Data Upload to S3**: The scraped data is successfully uploaded to an AWS S3 bucket, where it is stored for further analysis. The application uses the `boto3` Python library for interacting with AWS S3.
 
 - **Machine Learning Pipeline**: The data is ready to be processed and analyzed with machine learning algorithms. The next steps involve implementing specific analysis and model training for predictions, classifications, or other analyses based on the scraped data.
@@ -26,8 +26,8 @@ This application scrapes data from various sources and uploads it to an AWS S3 b
 - **BeautifulSoup**: For web scraping to collect relevant data from the web.
 - **Boto3**: For interacting with AWS S3 and uploading data to the cloud.
 - **AWS S3**: Used for storing the scraped data.
-- **Machine Learning Libraries**: To process and analyze the data (e.g., TensorFlow, Scikit-learn).
-- **Frontend Frameworks**: To display the analysis results on a web interface (e.g., React.js).
+- **Machine Learning Libraries**: To process and analyze the data (TensorFlow, Scikit-learn).
+- **Frontend Frameworks**: To display the analysis results on a web interface (React.js).
 
 ## Setup Instructions
 
@@ -35,7 +35,7 @@ This application scrapes data from various sources and uploads it to an AWS S3 b
 
    ```bash
    git clone https://github.com/franciscomartinez45/Soccer-ML-app.git
-   cd project-name
+   cd soccer-predictor
 
    ```
 
@@ -49,6 +49,7 @@ This application scrapes data from various sources and uploads it to an AWS S3 b
    ```
     aws configure
    ```
+   run steps to configure your private and secret keys along with a region
 
 ## Next Steps
 
