@@ -41,7 +41,8 @@ This application scrapes data from flashscore usa and uploads it to an AWS S3 bu
 
 2. **Install Dependencies**:
 
-   ```pip install -r requirements.txt
+   ```
+   pip install -r requirements.txt
 
    ```
 
