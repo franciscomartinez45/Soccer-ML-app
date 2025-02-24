@@ -20,6 +20,8 @@ options.add_argument("--disable-dev-shm-usage")
 league="laliga"
 country="spain"
 sport="soccer"
+week = 26
+
 
 def get_form():
     service = Service("/usr/bin/chromedriver")  
@@ -32,7 +34,7 @@ def get_form():
 
     """Scrape all information of team form for past 5 days"""
 
-    for match in soup.find_all("div", class_="event__match event__match--withRowLink event__match--static event__match--twoLine"):
+    for match in soup.find_all("div", class_="event__match event__match--withRowLink event__match--static event__match--twoLine")[:50]:
         home_team = match.find("div", class_="wcl-participant_7lPCX event__homeParticipant").text
         away_team = match.find("div", class_="wcl-participant_7lPCX event__awayParticipant").text
         home_score= match.find("div", class_="event__score event__score--home").text
@@ -42,7 +44,7 @@ def get_form():
 
     """convert to panda"""
     df = pd.DataFrame(matches)
-    #print(df)
+   # print(df)
 
     csv_buffer = StringIO()
     df.to_csv(csv_buffer, index=False)
@@ -64,7 +66,7 @@ def get_form():
 def get_standings():
     service = Service("/usr/bin/chromedriver")  
     driver = webdriver.Chrome(service=service, options=options)
-    standingsURL = "https://www.flashscoreusa.com/soccer/spain/laliga/standings/#/dINOZk9Q/table/overall"
+    standingsURL = f"https://www.flashscoreusa.com/{sport}/{country}/{league}/standings/"
     driver.get(standingsURL)
     soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
@@ -91,7 +93,6 @@ def get_standings():
     df = pd.DataFrame(teams)
     csv_buffer = StringIO()
     df.to_csv(csv_buffer, index=False)
-
     """S3 bucket initialization"""
     bucket_name = 'soccer-predictor-web-scrape' 
     file_name = 'team_standings.csv' 
@@ -104,10 +105,42 @@ def get_standings():
 
     print(f"Successfully uploaded to s3://{bucket_name}/{file_name}")
     #print(df)
+
+def get_fixtures():
+    service = Service("/usr/bin/chromedriver")  
+    driver = webdriver.Chrome(service=service, options=options)
+    standingsURL = f"https://www.flashscoreusa.com/{sport}/{country}/{league}/fixtures/"
+    driver.get(standingsURL)
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    driver.quit()
+    teams = []
+
+    """Scrape upcoming matches for all teams"""
+    for match in soup.find_all("div","event__match event__match--withRowLink event__match--static event__match--scheduled event__match--twoLine")[:10]:
+       
+        home_team = match.find("div","wcl-participant_7lPCX event__homeParticipant").text 
+        away_team = match.find("div","wcl-participant_7lPCX event__awayParticipant").text
+        teams.append({"Home team":home_team, "Away team":away_team})
+    df = pd.DataFrame(teams)
+    csv_buffer = StringIO()
+    df.to_csv(csv_buffer, index=False)
+   
+    """S3 bucket initialization"""
+    bucket_name = 'soccer-predictor-web-scrape' 
+    file_name = 'upcoming_fixtures.csv' 
+    s3.put_object(
+        Bucket=bucket_name,
+        Key=file_name,
+        Body=csv_buffer.getvalue(),
+        ContentType='text/csv'
+    )
+    print(f"Successfully uploaded to s3://{bucket_name}/{file_name}")
+
+
 def main():
-    #posts = get_form()
+    posts = get_form()
     teams = get_standings()
-    
+    next_fixtures = get_fixtures()
 
 if __name__ == "__main__":
     main()
