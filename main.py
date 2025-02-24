@@ -5,6 +5,7 @@ from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import pandas as pd
 import boto3
+from soccer_data_api import SoccerDataAPI
 
 s3 = boto3.client('s3')
 
@@ -21,11 +22,10 @@ league="laliga"
 country="spain"
 sport="soccer"
 week = 26
-
+service = Service("/usr/bin/chromedriver")  
+driver = webdriver.Chrome(service=service, options=options)
 
 def get_form():
-    service = Service("/usr/bin/chromedriver")  
-    driver = webdriver.Chrome(service=service, options=options)
     URL = f"https://www.flashscoreusa.com/{sport}/{country}/{league}/results/"
     driver.get(URL)
     soup = BeautifulSoup(driver.page_source, "html.parser")
@@ -44,7 +44,7 @@ def get_form():
 
     """convert to panda"""
     df = pd.DataFrame(matches)
-   # print(df)
+    print(df)
 
     csv_buffer = StringIO()
     df.to_csv(csv_buffer, index=False)
@@ -64,33 +64,13 @@ def get_form():
     #print(df)
 
 def get_standings():
-    service = Service("/usr/bin/chromedriver")  
-    driver = webdriver.Chrome(service=service, options=options)
-    standingsURL = f"https://www.flashscoreusa.com/{sport}/{country}/{league}/standings/"
-    driver.get(standingsURL)
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-    driver.quit()
-    teams = []
-
-    """Scrape all the standings information for all teams in the current league web page"""
-
-    for team in soup.find_all("div",class_="ui-table__row"):
-        position = team.find("div",class_="tableCellRank").text.rstrip(".")
-        name = team.find("a",class_="tableCellParticipant__name").text
-        played = team.find_all("span",class_="table__cell table__cell--value")[0].text
-        won = team.find_all("span",class_="table__cell table__cell--value")[1].text
-        tied  = team.find_all("span",class_="table__cell table__cell--value")[2].text
-        lost =  team.find_all("span",class_="table__cell table__cell--value")[3].text
-        goals = team.find("span", class_="table__cell table__cell--value table__cell--score").text
-        goal_difference = team.find("span", class_="table__cell table__cell--value table__cell--goalsForAgainstDiff").text
-        points = team.find("span",class_="table__cell table__cell--value table__cell--points").text
-        team_cells = team.find_all("div", class_="tableCellFormIcon wcl-trigger_YhU1j")
-        present_form = [team_cells[i].text for i in range(5)]
-        teams.append({"Position":position,"Team Name":name,"Played":played,"Won":won,"Tied":tied, "Lost":lost,"Scored:Conceded":goals, "Goal Difference":goal_difference,"Total Points":points, "Form":present_form})
-        #print(f"{position},{name},{played},{won},{tied},{lost},{goals},{goal_difference},{points}")
-        #return None
-
+    
+    standings = SoccerDataAPI()
+    
+    teams = standings.la_liga()
+    
     df = pd.DataFrame(teams)
+    
     csv_buffer = StringIO()
     df.to_csv(csv_buffer, index=False)
     """S3 bucket initialization"""
@@ -104,11 +84,9 @@ def get_standings():
     )
 
     print(f"Successfully uploaded to s3://{bucket_name}/{file_name}")
-    #print(df)
-
+   
 def get_fixtures():
-    service = Service("/usr/bin/chromedriver")  
-    driver = webdriver.Chrome(service=service, options=options)
+    
     standingsURL = f"https://www.flashscoreusa.com/{sport}/{country}/{league}/fixtures/"
     driver.get(standingsURL)
     soup = BeautifulSoup(driver.page_source, "html.parser")
@@ -124,7 +102,7 @@ def get_fixtures():
     df = pd.DataFrame(teams)
     csv_buffer = StringIO()
     df.to_csv(csv_buffer, index=False)
-   
+    print(df)
     """S3 bucket initialization"""
     bucket_name = 'soccer-predictor-web-scrape' 
     file_name = 'upcoming_fixtures.csv' 
