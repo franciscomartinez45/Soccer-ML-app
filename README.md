@@ -2,7 +2,7 @@
 
 ## Overview
 
-This application scrapes data from flashscore usa and uploads it to an AWS S3 bucket for further processing. The collected data will serve as the foundation for a machine learning project, where the data will be analyzed to create predictions about soccer scores for upcoming games. Using a front end interface, still in the works, this application will provide users with an interactive way to explore and possibly predict the outcome of upcoming soccer games in Spain's La Liga soccer league
+This application scrapes data from [flashscore usa](https://www.sports-reference.com/) and uploads it to an AWS S3 bucket for further processing. The collected data will serve as the foundation for a machine learning project, where the data will be analyzed to create predictions about soccer scores for upcoming games. Using a front end interface, still in the works, this application will provide users with an interactive way to explore and possibly predict the outcome of upcoming soccer games in Spain's La Liga soccer league
 
 ### Key Features:
 
