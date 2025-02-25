@@ -28,54 +28,60 @@ sport="soccer"
 week = 26
 
 
-def get_form():
+
+def get_standings():
+    
     service = Service("/usr/bin/chromedriver")  
     driver = webdriver.Chrome(service=service, options=options)
-    URL = f"https://www.flashscoreusa.com/{sport}/{country}/{league}/results/"
+    URL = "https://fbref.com/en/comps/12/La-Liga-Stats"
     driver.get(URL)
     soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
-    matches = []
-    team_form = defaultdict(list)
-    """Scrape all information of team form for past 5 days"""
+    teams = []
+    team_form = []
+    for team in soup.select("table.stats_table tbody tr")[:20]:
+        team_data = {}
+        team_data["rank"] = team.find("th", {"data-stat": "rank"}).text
+        team_name_tag = team.find("td", {"data-stat": "team"})
+        if team_name_tag and team_name_tag.a:  
+            team_data["team"] = team_name_tag.a.text.strip()
+        stats = [
+            "games", "wins", "ties", "losses", "goals_for", "goals_against", 
+            "goal_diff", "points", "points_avg", "xg_for", "xg_against", 
+            "xg_diff", "xg_diff_per90"
+        ]
+        for stat in stats:
+            stat_tag = team.find("td", {"data-stat": stat})
+            team_data[stat] = stat_tag.text.strip() if stat_tag else None
 
-    for match in soup.find_all("div", class_="event__match event__match--withRowLink event__match--static event__match--twoLine"):
-        home_team = match.find("div", class_="wcl-participant_7lPCX event__homeParticipant").text
-        away_team = match.find("div", class_="wcl-participant_7lPCX event__awayParticipant").text
-        home_score= match.find("div", class_="event__score event__score--home").text
-        away_score = match.find("div", class_="event__score event__score--away").text
-        home_team = ''.join(filter(str.isalpha,home_team))
-        away_team = ''.join(filter(str.isalpha, away_team))
-        matches.append({"home_team": home_team, "away_team": away_team, "home_score": home_score,"away_score":away_score})
-        #print(f'{home_team} {home_score} - {away_score} {away_team}')
-        if home_score > away_score:
-            home_result, away_result = 1, -1
-        elif home_score < away_score:
-            home_result, away_result = -1, 1
-        else:
-            home_result, away_result = 0, 0
         
-        #print(f"{home_team}, {away_team}")
-        team_form[home_team].append(home_result)
-        team_form[away_team].append(away_result)
-        team_form[home_team] = team_form[home_team][:5]
-        team_form[away_team] = team_form[away_team][:5]
+        team_form.append({"team":team_name_tag.a.text.strip(),"form":team.find("td",{"data-stat":"last_5"}).text})
+        
+        teams.append(team_data)
+    team_form_df=pd.DataFrame(team_form)
     
-    #print(matches)
-
-    """convert to panda"""
-    df = pd.DataFrame.from_dict(team_form,orient="index")
+    mapping = {
+        "W": 1,
+        "D": 0,
+        "L": -1
+    }
+    team_form_df["form_list"] = team_form_df["form"].str.split()
+    team_form_df["encoded_form"] = team_form_df["form_list"].apply(
+        lambda outcomes: [mapping[result] for result in outcomes]
+    )
+  
     
-    df=df.sort_index()
+    form_df = pd.DataFrame(team_form_df["encoded_form"].tolist(),columns=["form_1","form_2","form_3","form_4","form_5"])
+    form_df = pd.concat([team_form_df["team"],form_df], axis =1)
+    form_df = form_df.sort_values(by=["team"])
 
     csv_buffer = StringIO()
-    df.to_csv(csv_buffer, index=True, header=False)
-    
-    """S3 bucket initializer"""
-   
-    file_name = 'last_five_form.csv' 
-    
-    
+    df = pd.DataFrame(teams)
+    df = df.sort_values(by=['team'])
+    df.to_csv(csv_buffer, index=False)
+    """S3 bucket initialization"""
+    #print(df)
+    file_name = 'team_standings.csv' 
     s3.put_object(
         Bucket=bucket_name,
         Key=file_name,
@@ -83,25 +89,14 @@ def get_form():
         ContentType='text/csv'
     )
     print(f"Successfully uploaded to s3://{bucket_name}/{file_name}")
-    #print(df)
-
-def get_standings():
+    csv_buffer2 = StringIO()
+    form_df.to_csv(csv_buffer2,index=False)
     
-    standings = SoccerDataAPI()
-    
-    teams = standings.la_liga()
-    
-    df = pd.DataFrame(teams)
-    
-    csv_buffer = StringIO()
-    df.to_csv(csv_buffer, index=False)
-    """S3 bucket initialization"""
-   
-    file_name = 'team_standings.csv' 
+    file_name = 'last_five_form.csv' 
     s3.put_object(
         Bucket=bucket_name,
         Key=file_name,
-        Body=csv_buffer.getvalue(),
+        Body=csv_buffer2.getvalue(),
         ContentType='text/csv'
     )
 
@@ -110,21 +105,30 @@ def get_standings():
 def get_fixtures():
     service = Service("/usr/bin/chromedriver")  
     driver = webdriver.Chrome(service=service, options=options) 
-    standingsURL = f"https://www.flashscoreusa.com/{sport}/{country}/{league}/fixtures/"
+    standingsURL = "https://fbref.com/en/comps/12/schedule/La-Liga-Scores-and-Fixtures"
     driver.get(standingsURL)
     soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
     teams = []
 
     """Scrape upcoming matches for all teams"""
-    for match in soup.find_all("div","event__match event__match--withRowLink event__match--static event__match--scheduled event__match--twoLine")[:10]:
-       
-        home_team = match.find("div","wcl-participant_7lPCX event__homeParticipant").text 
-        away_team = match.find("div","wcl-participant_7lPCX event__awayParticipant").text
-        teams.append({"home_team":home_team, "away_team":away_team})
+  
+    for j in range(300,311):
+        match = soup.find("tr",{"data-row": f"{j}"})
+        if match:
+            home_team = match.find("td",{"data-stat":"home_team"})
+            home_team_text = home_team.text.strip() if home_team else "N/A"
+            away_team = match.find("td",{"data-stat":"away_team"})
+            away_team_text = away_team.text.strip() if away_team else "N/A"
+            teams.append({"home_team":home_team_text,"away_team":away_team_text})
+
+        
+    
     df = pd.DataFrame(teams)
+    df = df.drop(index=3).reset_index(drop=True)
+    print(df)
     csv_buffer = StringIO()
-    df.to_csv(csv_buffer, index=False, header=False)
+    df.to_csv(csv_buffer, index=False, header=True)
     
     """S3 bucket initialization"""
     
@@ -139,8 +143,8 @@ def get_fixtures():
 
 
 def main():
-    posts = get_form()
-    teams = get_standings()
+    
+    #teams = get_standings()
     next_fixtures = get_fixtures()
 
 if __name__ == "__main__":
