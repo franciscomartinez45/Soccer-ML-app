@@ -7,9 +7,12 @@ import pandas as pd
 import boto3
 from soccer_data_api import SoccerDataAPI
 from collections import defaultdict
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 s3 = boto3.client('s3')
-
+bucket_name = os.getenv("BUCKET_NAME")
 options = Options()
 options.add_argument("--headless")
 options.add_argument("--disable-gpu")
@@ -69,7 +72,7 @@ def get_form():
     df.to_csv(csv_buffer, index=True, header=False)
     
     """S3 bucket initializer"""
-    bucket_name = 'soccer-predictor-web-scrape' 
+   
     file_name = 'last_five_form.csv' 
     
     
@@ -93,7 +96,7 @@ def get_standings():
     csv_buffer = StringIO()
     df.to_csv(csv_buffer, index=False)
     """S3 bucket initialization"""
-    bucket_name = 'soccer-predictor-web-scrape' 
+   
     file_name = 'team_standings.csv' 
     s3.put_object(
         Bucket=bucket_name,
@@ -121,10 +124,10 @@ def get_fixtures():
         teams.append({"home_team":home_team, "away_team":away_team})
     df = pd.DataFrame(teams)
     csv_buffer = StringIO()
-    df.to_csv(csv_buffer)
+    df.to_csv(csv_buffer, index=False, header=False)
     
     """S3 bucket initialization"""
-    bucket_name = 'soccer-predictor-web-scrape' 
+    
     file_name = 'upcoming_fixtures.csv' 
     s3.put_object(
         Bucket=bucket_name,
